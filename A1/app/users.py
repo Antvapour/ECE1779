@@ -44,9 +44,22 @@ def signup_save():
         error=True
         error_msg="Error: All fields are required!"
 
-    else if password1 != password2 :
+    elif password1 != password2 :
         error=True
         error_msg="Error: The re-typed password does not match your first entry!"
+
+    else :
+        cnx = get_db()
+        cursor = cnx.cursor()
+
+        query = '''SELECT * FROM users
+                          WHERE username = %s'''
+        cursor.execute(query,(username,))
+        row = cursor.fetchone()
+
+        if row is not None :
+            error=True
+            error_msg="Error: User name already exists!"
 
 
     if error:
@@ -86,16 +99,16 @@ def login_submit():
         cnx = get_db()
         cursor = cnx.cursor()
 
-        query = '''SELECT username, password FROM users
-                          WHERE CONTAINS(username, %s)'''
-        cursor.execute(query,(username))
+        query = '''SELECT * FROM users
+                          WHERE username = %s'''
+        cursor.execute(query,(username,))
         row = cursor.fetchone()
 
         if row is None :
             error=True
             error_msg="Error: User Does not exist!"
 
-        else if row[1] != password :
+        elif row[2] != password :
             error=True
             error_msg="Error: password does not match!"
 
@@ -103,14 +116,15 @@ def login_submit():
         return render_template("users/signup.html",title="Log in",error_msg=error_msg, username=username)
 
     session['authenticated'] = True
+    session['username'] = row[0]
 
     return redirect(url_for('user_home'))
 
 
-@webapp.route('/home', methods=['GET','POST']])
+@webapp.route('/home', methods=['GET','POST'])
 ###################################################
 def user_home():
     if 'authenticated' not in session:
         return redirect(url_for('login'))
 
-    return 0
+    return render_template("photos/home.html",title="home")
