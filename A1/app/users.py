@@ -113,7 +113,7 @@ def login_submit():
             error_msg="Error: password does not match!"
 
     if error :
-        return render_template("users/signup.html",title="Log in",error_msg=error_msg, username=username)
+        return render_template("users/login.html",title="Log in",error_msg=error_msg, username=username)
 
     session['authenticated'] = True
     session['username'] = row[0]
