@@ -25,6 +25,7 @@ def teardown_db(exception):
     if db is not None:
         db.close()
 
+#####
 
 @webapp.route('/signup', methods=['GET'])
 # Display an HTML form that allows users to sign up.
@@ -41,12 +42,12 @@ def signup_save():
     error = False
 
     if username == "" or password1== "" or password2== "" :
-        error=True
-        error_msg="Error: All fields are required!"
+        error = True
+        error_msg = "Error: All fields are required!"
 
     elif password1 != password2 :
-        error=True
-        error_msg="Error: The re-typed password does not match your first entry!"
+        error = True
+        error_msg = "Error: The re-typed password does not match your first entry!"
 
     else :
         cnx = get_db()
@@ -58,8 +59,8 @@ def signup_save():
         row = cursor.fetchone()
 
         if row is not None :
-            error=True
-            error_msg="Error: User name already exists!"
+            error = True
+            error_msg = "Error: User name already exists!"
 
 
     if error:
@@ -78,7 +79,7 @@ def signup_save():
 
     return redirect(url_for('user_home'))
 
-@webapp.route('/login',methods=['GET'])
+@webapp.route('/login', methods=['GET'])
 # Display an HTML form that allows users to log in.
 def login():
     return render_template("users/login.html",title="Log in")
@@ -92,8 +93,8 @@ def login_submit():
     error = False
 
     if username == "" or password== "" :
-        error=True
-        error_msg="Error: All fields are required!"
+        error = True
+        error_msg = "Error: All fields are required!"
 
     else :
         cnx = get_db()
@@ -105,12 +106,13 @@ def login_submit():
         row = cursor.fetchone()
 
         if row is None :
-            error=True
-            error_msg="Error: User Does not exist!"
+            error = True
+            error_msg = "Error: User Does not exist!"
 
         elif row[2] != password :
             error=True
             error_msg="Error: password does not match!"
+           # return render_template("users/login.html", title="Log in", error_msg=error_msg, username=username)
 
     if error :
         return render_template("users/login.html",title="Log in",error_msg=error_msg, username=username)
@@ -122,9 +124,9 @@ def login_submit():
 
 
 @webapp.route('/home', methods=['GET','POST'])
-###################################################
 def user_home():
     if 'authenticated' not in session:
         return redirect(url_for('login'))
 
-    return render_template("photos/home.html",title="home")
+    return render_template("photos/home.html",title="Photo Home")
+
