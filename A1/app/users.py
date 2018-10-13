@@ -5,7 +5,11 @@ import mysql.connector
 
 from app.config import db_config
 
+import os
+
 webapp.secret_key = '\x80\xa9s*\x12\xc7x\xa9d\x1f(\x03\xbeHJ:\x9f\xf0!\xb1a\xaa\x0f\xee'
+
+APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 def connect_to_database():
     return mysql.connector.connect(user=db_config['user'],
@@ -76,6 +80,15 @@ def signup_save():
 
     session['authenticated'] = True
 
+    query = '''SELECT id FROM users
+                      WHERE username = %s'''
+    cursor.execute(query,(username,))
+    row = cursor.fetchone()
+    session['username'] = row[0]
+
+    path = os.path.join(APP_ROOT, 'images/', str(row[0]))
+    os.makedirs(path)
+
     return redirect(url_for('user_home'))
 
 @webapp.route('/login',methods=['GET'])
@@ -127,4 +140,24 @@ def user_home():
     if 'authenticated' not in session:
         return redirect(url_for('login'))
 
-    return render_template("photos/home.html",title="home")
+    users_id = session.get('username')
+
+    cnx = get_db()
+    cursor = cnx.cursor()
+
+    query = '''SELECT filename FROM images
+                    WHERE users_id = %s'''
+    cursor.execute(query,(users_id,))
+
+    return render_template("images/home.html",title="Home", cursor=cursor)
+
+def send_image(filename):
+    users_id = session.get('username')
+    path = os.path.join(APP_ROOT, 'images/', str(users_id), filename)
+    return send_from_directory("images", path)
+
+@webapp.route('/logout',methods=['GET','POST'])
+# Clear the session when users want to log out.
+def logout():
+    session.clear()
+    return redirect(url_for('main'))

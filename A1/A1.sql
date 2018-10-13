@@ -33,22 +33,17 @@ DEFAULT CHARACTER SET = latin1;
 
 
 -- -----------------------------------------------------
--- Table `ece1779`.`photos`
+-- Table `ece1779`.`images`
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS `ece1779`.`photos` ;
+DROP TABLE IF EXISTS `ece1779`.`images` ;
 
-CREATE TABLE IF NOT EXISTS `ece1779`.`photos` (
+CREATE TABLE IF NOT EXISTS `ece1779`.`images` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `users_id` INT NOT NULL,
-  `stored_location` TEXT NULL,
+  `filename` TEXT NULL,
 
   -- INDEX `fk_sections_courses_idx` (`courses_id` ASC),
-  PRIMARY KEY (`id`),
-  -- CONSTRAINT `fk_sections_courses`
-    FOREIGN KEY (`users_id`)
-    REFERENCES `ece1779`.`users` (`id`)
-    ON DELETE CASCADE
-    ON UPDATE NO ACTION)
+  PRIMARY KEY (`id`))
 ENGINE = InnoDB;
 
 

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+
+    <form action='{{url_for('logout')}}' method='post'>
+        <input type='submit' value='Log out'/ >
+    </form>
+
+    <div>If you have uploaded some images, it will be shown below</div>
+
+    <table>
+      {% for row  in cursor %}
+         <tr>
+             <td>
+                 <img src=" {{url_for('send_image', filename=row[0])}}" style="width:150px;height:200px;">
+             </td>
+         </tr>
+
+      {% endfor %}
+
+    </table>
+
+    <div>You can also upload your images below:</div>
+
+    <form action="{{ url_for('images_upload') }}" method="POST" enctype="multipart/form-data">
+
+        <input type="file" name="file" accept="image/*" multiple>
+        <input type="submit" value="send">
+
+    </form>
+
+
+{% endblock %}
