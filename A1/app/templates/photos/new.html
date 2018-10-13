@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+
+    <form id="upload-form" action="{{ url_for('images_upload_save') }}" method="POST" enctype="multipart/form-data">
+
+        <div>
+        <label>users_id = {{id}} </label>
+        </div>
+
+        <div>
+        <label>Imagename</label>
+        <input type='text' name='Imagename' value='{{imagename}}'>
+        </div>
+
+        <div>
+        <label>Trans1</label>
+        <input type='text' name='Trans1' value='{{trans1}}'>
+        </div>
+
+        <div>
+        <label>Trans2</label>
+        <input type='text' name='Trans2' value='{{trans2}}'>
+        </div>
+
+        <div>
+        <label>Trans3</label>
+        <input type='text' name='Trans2' value='{{trans3}}'>
+        </div>
+
+        <input type="file" name="file" accept="image/*" multiple>
+        <input type="submit" value="send">
+
+    </form>
+
+
+
+
+
+{% endblock %}

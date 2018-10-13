@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+    <form action='{{url_for('images_list')}}' method='get'>
+        <input type='submit' value='Back'/ >
+    </form>
+
+    <div>trans1: {{ trans1 }}</div>
+    <div>trans2: {{ trans2 }}</div>
+    <div>trans3: {{ trans3 }}</div>
+
+
+{% endblock %}
+
+
