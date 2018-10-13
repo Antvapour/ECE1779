@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+
+    <form id="upload-form" action="{{ url_for('images_upload_save') }}" method="POST" enctype="multipart/form-data">
+
+        <div>
+        <label>users_id = {{id}} </label>
+        </div>
+
+        <br>
+
+        <input type="file" name="file" accept="image/*" multiple>
+        <input type="submit" value="send">
+
+    </form>
+
+
+
+
+
+{% endblock %}
