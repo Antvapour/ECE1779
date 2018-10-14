@@ -7,11 +7,15 @@
 
     <div>If you have uploaded some images, it will be shown below</div>
 
+    <img src='1.jpg' />
+
     <table>
       {% for row  in cursor %}
          <tr>
              <td>
-                 <img src=" {{url_for('send_image', filename=row[0])}}" style="width:150px;height:200px;">
+                 <!-- <img src=" {{url_for('static', filename='/'.join(['images', row[0]|string, row[1]]))}}"
+                      style="width:150px;height:200px;"> -->
+
              </td>
          </tr>
 

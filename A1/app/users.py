@@ -86,7 +86,7 @@ def signup_save():
     row = cursor.fetchone()
     session['username'] = row[0]
 
-    path = os.path.join(APP_ROOT, 'images/', str(row[0]))
+    path = os.path.join(APP_ROOT, 'images', str(row[0]))
     os.makedirs(path)
 
     return redirect(url_for('user_home'))
@@ -145,16 +145,11 @@ def user_home():
     cnx = get_db()
     cursor = cnx.cursor()
 
-    query = '''SELECT filename FROM images
+    query = '''SELECT users_id, filename FROM images
                     WHERE users_id = %s'''
     cursor.execute(query,(users_id,))
 
     return render_template("images/home.html",title="Home", cursor=cursor)
-
-def send_image(filename):
-    users_id = session.get('username')
-    path = os.path.join(APP_ROOT, 'images/', str(users_id), filename)
-    return send_from_directory("images", path)
 
 @webapp.route('/logout',methods=['GET','POST'])
 # Clear the session when users want to log out.
