@@ -51,10 +51,3 @@ def images_upload():
     cnx.commit()
 
     return redirect(url_for('user_home'))
-
-#@webapp.route('/home', methods=['POST'])
-##################################################
-#def send_image(filename):
-#    users_id = session.get('username')
-#    path = os.path.join(APP_ROOT, 'images', str(users_id), filename)
-#    return send_from_directory("images", path)

@@ -1,4 +1,4 @@
-from flask import render_template, session, redirect, url_for, request, g
+from flask import render_template, session, redirect, url_for, request, g, send_from_directory
 from app import webapp
 
 import mysql.connector
@@ -150,6 +150,14 @@ def user_home():
     cursor.execute(query,(users_id,))
 
     return render_template("images/home.html",title="Home", cursor=cursor)
+
+@webapp.route('/show/<filename>', methods=['GET','POST'])
+##################################################
+def send_image(filename):
+    users_id = session.get('username')
+    path = os.path.join(APP_ROOT, str(users_id))
+    return send_from_directory(path, filename)
+
 
 @webapp.route('/logout',methods=['GET','POST'])
 # Clear the session when users want to log out.
