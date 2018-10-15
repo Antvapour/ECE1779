@@ -1,11 +1,15 @@
-from flask import render_template, session, redirect, url_for, request, g
+from flask import render_template, session, redirect, url_for, request, g, send_from_directory
 from app import webapp
 
 import mysql.connector
 
 from app.config import db_config
 
+import os
+
 webapp.secret_key = '\x80\xa9s*\x12\xc7x\xa9d\x1f(\x03\xbeHJ:\x9f\xf0!\xb1a\xaa\x0f\xee'
+
+APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 
 def connect_to_database():
@@ -21,18 +25,19 @@ def get_db():
         db = g._database = connect_to_database()
     return db
 
+
 @webapp.teardown_appcontext
 def teardown_db(exception):
     db = getattr(g, '_database', None)
     if db is not None:
         db.close()
 
-#####
 
 @webapp.route('/signup', methods=['GET'])
 # Display an HTML form that allows users to sign up.
 def signup():
     return render_template("users/signup.html",title="New User")
+
 
 @webapp.route('/signup', methods=['POST'])
 # Create a new account and save it in the database.
@@ -44,12 +49,12 @@ def signup_save():
     error = False
 
     if username == "" or password1== "" or password2== "" :
-        error = True
-        error_msg = "Error: All fields are required!"
+        error=True
+        error_msg="Error: All fields are required!"
 
     elif password1 != password2 :
-        error = True
-        error_msg = "Error: The re-typed password does not match your first entry!"
+        error=True
+        error_msg="Error: The re-typed password does not match your first entry!"
 
     else :
         cnx = get_db()
@@ -61,9 +66,8 @@ def signup_save():
         row = cursor.fetchone()
 
         if row is not None :
-            error = True
-            error_msg = "Error: User name already exists!"
-
+            error=True
+            error_msg="Error: User name already exists!"
 
     if error:
         return render_template("users/signup.html",title="New User",error_msg=error_msg, username=username)
@@ -79,9 +83,18 @@ def signup_save():
 
     session['authenticated'] = True
 
+    query = '''SELECT id FROM users
+                      WHERE username = %s'''
+    cursor.execute(query,(username,))
+    row = cursor.fetchone()
+    session['username'] = row[0]
+
+    path = os.path.join(APP_ROOT, 'images', str(row[0]))
+    os.makedirs(path)
+
     return redirect(url_for('user_home'))
 
-@webapp.route('/login', methods=['GET'])
+@webapp.route('/login',methods=['GET'])
 # Display an HTML form that allows users to log in.
 def login():
     return render_template("users/login.html",title="Log in")
@@ -95,8 +108,8 @@ def login_submit():
     error = False
 
     if username == "" or password== "" :
-        error = True
-        error_msg = "Error: All fields are required!"
+        error=True
+        error_msg="Error: All fields are required!"
 
     else :
         cnx = get_db()
@@ -108,13 +121,12 @@ def login_submit():
         row = cursor.fetchone()
 
         if row is None :
-            error = True
-            error_msg = "Error: User Does not exist!"
+            error=True
+            error_msg="Error: User Does not exist!"
 
         elif row[2] != password :
             error=True
             error_msg="Error: password does not match!"
-           # return render_template("users/login.html", title="Log in", error_msg=error_msg, username=username)
 
     if error :
         return render_template("users/login.html",title="Log in",error_msg=error_msg, username=username)
@@ -125,12 +137,37 @@ def login_submit():
     return redirect(url_for('user_home'))
 
 
-@webapp.route('/home', methods=['GET'])
+@webapp.route('/home', methods=['GET','POST'])
+###################################################
 def user_home():
-
     if 'authenticated' not in session:
         return redirect(url_for('login'))
 
-    return render_template("photos/home.html", title="Photo Home", id=session.get('username'))
+    users_id = session.get('username')
+
+    cnx = get_db()
+    cursor = cnx.cursor()
+
+    query = '''SELECT users_id, filename FROM images
+                    WHERE users_id = %s'''
+    cursor.execute(query,(users_id,))
+
+    return render_template("images/home.html",title="Home", cursor=cursor)
+
+@webapp.route('/show/<filename>', methods=['GET','POST'])
+##################################################
+def send_image(filename):
+    users_id = session.get('username')
+
+    path = os.path.join(str(users_id),filename)
+    #path = os.path.join(APP_ROOT, str(users_id))
+   # return send_from_directory(os.path.join(APP_ROOT, str(users_id)), filename)
+
+    return send_from_directory("images", path)
 
 
+@webapp.route('/logout',methods=['GET','POST'])
+# Clear the session when users want to log out.
+def logout():
+    session.clear()
+    return redirect(url_for('main'))
