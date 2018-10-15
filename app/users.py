@@ -7,6 +7,8 @@ from app.config import db_config
 
 import os
 
+from wand.image import Image
+
 webapp.secret_key = '\x80\xa9s*\x12\xc7x\xa9d\x1f(\x03\xbeHJ:\x9f\xf0!\xb1a\xaa\x0f\xee'
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -155,15 +157,25 @@ def user_home():
     return render_template("images/home.html",title="Home", cursor=cursor)
 
 @webapp.route('/show/<filename>', methods=['GET','POST'])
-##################################################
+# display thumbnails of a specific account
 def send_image(filename):
     users_id = session.get('username')
+    path_basic = os.path.join(APP_ROOT, 'images', str(users_id), filename)
 
-    path = os.path.join(str(users_id),filename)
-    #path = os.path.join(APP_ROOT, str(users_id))
-   # return send_from_directory(os.path.join(APP_ROOT, str(users_id)), filename)
+    filename_thumb = filename + '_thumbnail.png'
+    path = os.path.join(str(users_id), filename_thumb)
+    path_thumb = os.path.join(APP_ROOT, 'images', str(users_id), filename_thumb)
 
-    return send_from_directory("images", path)
+    with Image(filename=path_basic) as img:
+
+        with img.clone() as image:
+            size = image.width if image.width < image.height else image.height
+            image.crop(width=size, height=size, gravity='center')
+            image.resize(128, 128)
+            image.format = "png"
+            image.save(filename=path_thumb)
+
+            return send_from_directory("images", path)
 
 
 @webapp.route('/logout',methods=['GET','POST'])
