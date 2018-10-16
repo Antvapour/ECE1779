@@ -1,16 +1,40 @@
 {% extends "base.html" %}
 {% block content %}
+       <hr>
+       <form action='{{url_for('logout')}}' method='post'>
+        <input type='submit' value='Log out'/>
+       </form>
 
-       <p>Transformations!</p>
-       <ul class="thumb">
+       <form action='{{url_for('user_home')}}' method='get'>
+
+        <input type='submit' value='Back' />
+
+       </form>
+
+
+       <h2>Transformations!</h2>
+
+
+       <div style="text-align:center;">
        {% for i in ['', '_flopped.png', '_rotated.png', '_gray.png'] %}
-       <li>
 
-           <img src=" {{url_for('send_image_trans',filename=filename+i)}}" >
+            {% if i == '' %}
 
-       </li>
+               <img src=" {{url_for('send_image_trans',filename=filename+i)}}"  > <h3> _full version</h3>
+                   <br><br>
+
+
+            {% else %}
+
+
+               <img src=" {{url_for('send_image_trans',filename=filename+i)}}" ><h3> {{i}}</h3>
+                   <br><br>
+
+
+           {% endif %}
+
       {% endfor %}
+       </div>>
 
-       </ul>
 
 {% endblock %}
