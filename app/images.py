@@ -1,12 +1,18 @@
-
-from flask import render_template, redirect, url_for, request, g, session, send_from_directory
+from flask import render_template, session, redirect, url_for, request, g,send_from_directory
 from app import webapp
-import os
+
 import mysql.connector
+
+from app.config import db_config
+
+import os
+
+from wand.image import Image
+
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 
-from app.config import db_config
+webapp.secret_key = '\x80\xa9s*\x12\xc7x\xa9d\x1f(\x03\xbeHJ:\x9f\xf0!\xb1a\xaa\x0f\xee'
 
 
 def connect_to_database():
@@ -14,6 +20,7 @@ def connect_to_database():
                                    password=db_config['password'],
                                    host=db_config['host'],
                                    database=db_config['database'])
+
 
 def get_db():
     db = getattr(g, '_database', None)
@@ -28,89 +35,76 @@ def teardown_db(exception):
     if db is not None:
         db.close()
 
-################
-@webapp.route('/images', methods=['GET'])
-# Display an HTML list of all sections.
-def images_list():
-    cnx = get_db()
-
-    cursor = cnx.cursor()
-
-    query = '''SELECT i.id, i.stored_location
-               FROM users u, photos i 
-               WHERE u.id = i.users_id'''
-
-    cursor.execute(query)
-
-    return redirect(url_for('photos/home', cursor=cursor))
-
-
-
-@webapp.route('/images/<int:id>', methods=['GET'])
-# Display transformations of a specific image.
-def images_view(ima_loc):
-
-          with Image (filename= ima_loc ) as img:
-               with img.clone() as image:
-                    size = image.width if image.width < image.height else image.height
-                    image.crop(width=size, height=size, gravity='center')
-                    image.resize(256, 256)
-                    image.format = 'jpeg'
-
-          return render_template("photos/transformations.html", title="Transformations Home")
-
-
-#@webapp.route('/images/<int:id>', methods=['GET'])
-# Display transformations of a specific image.
-#def images_transformations(id):
-
-
-
-
-@webapp.route('/images/upload', methods=['GET'])
-# Display an empty HTML form that allows users to define new student.
-def images_upload():
-
-    return render_template("photos/new.html", title="New Images", id=session.get('username'))
-
 
 @webapp.route('/images/upload', methods=['POST'])
 # upload a new image and save it in the database.
-def images_upload_save():
+def images_upload():
+    if 'authenticated' not in session:
+        return redirect(url_for('login'))
 
     users_id = session.get('username')
-    target = os.path.join(APP_ROOT, 'images/')
 
+    cnx = get_db()
+    cursor = cnx.cursor()
 
     for upload in request.files.getlist("file"):
         filename = upload.filename
-        print(filename)
-        stored_location = "".join([target, filename])
-        upload.save(stored_location)
+        path = os.path.join(APP_ROOT, 'images/', str(users_id), filename)
+        print(path)
+        upload.save(path)
+        query = ''' INSERT INTO images (users_id,filename)
+                           VALUES (%s,%s)'''
+        cursor.execute(query, (users_id,filename))
+        cnx.commit()
 
-    cnx = get_db()
-    cursor = cnx.cursor()
+        path_basic = os.path.join(APP_ROOT, 'images', str(users_id), filename)
 
-    query = ''' INSERT INTO photos (users_id,stored_location)
-                       VALUES (%s,%s)'''
+        # create rotated transformations and save
+        filename_rotated = filename + '_rotated.png'
+        path_rotated_full = os.path.join(APP_ROOT, 'images', str(users_id), filename_rotated)
 
-    cursor.execute(query, (users_id, stored_location))
+        with Image(filename=path_basic) as img:
+            with img.clone() as rotated:
+                rotated.rotate(135)
+                rotated.format = "png"
+                rotated.save(filename=path_rotated_full)
 
-    cnx.commit()
+        # create flopped transformations and save
+        filename_flopped = filename + '_flopped.png'
+        path_flopped_full = os.path.join(APP_ROOT, 'images', str(users_id), filename_flopped)
 
-    return redirect(url_for('images_list'))
+        with Image(filename=path_basic) as img:
+            with img.clone() as flopped:
+                flopped.flop()
+                flopped.format = "png"
+                flopped.save(filename=path_flopped_full)
+
+        # created gray-scale transformations and save
+
+        filename_gray = filename + '_gray.png'
+        path_gray_full = os.path.join(APP_ROOT, 'images', str(users_id), filename_gray)
+
+        with Image(filename=path_basic) as img:
+            with img.clone() as gray:
+                gray.type = 'grayscale'
+                gray.format = "png"
+                gray.save(filename=path_gray_full)
+
+        return redirect(url_for('user_home'))
 
 
-@webapp.route('/images/delete/<int:id>', methods=['POST'])
-# Deletes the specified student from the database.
-def sections_delete(id):
-    cnx = get_db()
-    cursor = cnx.cursor()
+@webapp.route('/images/trans/<filename>', methods=['GET'])
+# show the transformations of a specific image.
+def images_trans(filename):
+    filename1 = filename
+    return render_template("images/trans.html",title="Transformations Home", filename=filename1)
 
-    query = "DELETE FROM photos WHERE id = %s"
 
-    cursor.execute(query, (id,))
-    cnx.commit()
+@webapp.route('/trans/<filename>', methods=['GET','POST'])
+# display thumbnails of a specific account
+def send_image_trans(filename):
+    users_id = session.get('username')
+    filename = os.path.join(str(users_id), filename)
+    return send_from_directory("images", filename)
 
-    return redirect(url_for('images_list'))
 
