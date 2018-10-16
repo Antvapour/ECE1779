@@ -156,15 +156,49 @@ def user_home():
 
     return render_template("images/home.html",title="Home", cursor=cursor)
 
+
 @webapp.route('/show/<filename>', methods=['GET','POST'])
 # display thumbnails of a specific account
 def send_image(filename):
     users_id = session.get('username')
     path_basic = os.path.join(APP_ROOT, 'images', str(users_id), filename)
 
+# create rotated transformations and save
+    filename_rotated = filename + '_rotated.png'
+    path_rotated_full = os.path.join(APP_ROOT, 'images', str(users_id), filename_rotated)
+
+    with Image(filename=path_basic) as img:
+        with img.clone() as rotated:
+            rotated.rotate(135)
+            rotated.format = "png"
+            rotated.save(filename=path_rotated_full)
+
+# create flopped transformations and save
+    filename_flopped = filename + '_flopped.png'
+    path_flopped_full = os.path.join(APP_ROOT, 'images', str(users_id), filename_flopped)
+
+    with Image(filename=path_basic) as img:
+        with img.clone() as flopped:
+            flopped.flop()
+            flopped.format = "png"
+            flopped.save(filename=path_flopped_full)
+
+# created gray-scale transformations and save
+
+    filename_gray = filename + '_gray.png'
+    path_gray_full = os.path.join(APP_ROOT, 'images', str(users_id), filename_gray)
+
+    with Image(filename=path_basic) as img:
+        with img.clone() as gray:
+            gray.type = 'grayscale'
+            gray.format = "png"
+            gray.save(filename=path_gray_full)
+
+# create thumbnails of all images
+
     filename_thumb = filename + '_thumbnail.png'
+    path_thumb_full = os.path.join(APP_ROOT, 'images', str(users_id), filename_thumb)
     path = os.path.join(str(users_id), filename_thumb)
-    path_thumb = os.path.join(APP_ROOT, 'images', str(users_id), filename_thumb)
 
     with Image(filename=path_basic) as img:
 
@@ -173,7 +207,7 @@ def send_image(filename):
             image.crop(width=size, height=size, gravity='center')
             image.resize(128, 128)
             image.format = "png"
-            image.save(filename=path_thumb)
+            image.save(filename=path_thumb_full)
 
             return send_from_directory("images", path)
 
