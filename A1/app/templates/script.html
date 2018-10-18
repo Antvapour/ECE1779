@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+
+    <div class='error'>{{error_msg if error_msg != None}}</div>
+
+    <form action='{{url_for('script_upload')}}'  enctype="multipart/form-data" method="post">
+        User ID <input type="text" name="userID"><br />
+        Password <input type="text" name="password"><br />
+
+       	What is the image files to upload? <input type="file" name="uploadedfile"><br />
+
+       	<input type="submit" value="Send">
+      	<input type="reset"><br />
+
+
+        {{msg if msg != None}}<br />
+
+    </form>
+
+    <form action='{{url_for('main')}}' method='get'>
+        <input type='submit' value='Back'/>
+    </form>
+
+{% endblock %}

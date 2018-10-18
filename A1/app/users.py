@@ -1,5 +1,7 @@
 from flask import render_template, session, redirect, url_for, request, g, send_from_directory
 from app import webapp
+from hashlib import blake2b
+from hmac import compare_digest
 
 import mysql.connector
 
@@ -8,6 +10,18 @@ from app.config import db_config
 import os
 
 webapp.secret_key = '\x80\xa9s*\x12\xc7x\xa9d\x1f(\x03\xbeHJ:\x9f\xf0!\xb1a\xaa\x0f\xee'
+
+SECRET_KEY = b'pseudorandomly generated secret key'
+AUTH_SIZE = 16
+
+def sign(cookie):
+    h = blake2b(digest_size=AUTH_SIZE, key=SECRET_KEY)
+    h.update(bytes(cookie, 'utf-8'))
+    return h.hexdigest().encode('utf-8')
+
+def verify(cookie, sig):
+    good_sig = sign(cookie)
+    return compare_digest(good_sig, sig)
 
 def connect_to_database():
     return mysql.connector.connect(user=db_config['user'],
@@ -73,7 +87,7 @@ def signup_save():
     query = ''' INSERT INTO users (username,password)
                        VALUES (%s, %s)'''
 
-    cursor.execute(query,(username,password1))
+    cursor.execute(query,(username,sign(password1)))
     cnx.commit()
 
     session['authenticated'] = True
@@ -83,8 +97,8 @@ def signup_save():
     cursor.execute(query,(username,))
     row = cursor.fetchone()
     session['username'] = row[0]
-    ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'images')
 
+    ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'images')
     path = os.path.join(ROOT, str(row[0]))
     os.makedirs(path)
 
@@ -111,7 +125,7 @@ def login_submit():
         cnx = get_db()
         cursor = cnx.cursor()
 
-        query = '''SELECT * FROM users
+        query = '''SELECT id, password FROM users
                           WHERE username = %s'''
         cursor.execute(query,(username,))
         row = cursor.fetchone()
@@ -120,7 +134,7 @@ def login_submit():
             error=True
             error_msg="Error: User Does not exist!"
 
-        elif row[2] != password :
+        elif not verify(password, bytes(row[1], 'utf-8')) :
             error=True
             error_msg="Error: password does not match!"
 
@@ -133,7 +147,7 @@ def login_submit():
     return redirect(url_for('user_home'))
 
 
-@webapp.route('/home', methods=['GET','POST'])
+@webapp.route('/home', methods=['GET'])
 ###################################################
 def user_home():
     if 'authenticated' not in session:
@@ -150,7 +164,7 @@ def user_home():
 
     return render_template("images/home.html",title="User Home", cursor=cursor)
 
-@webapp.route('/show/<filename>', methods=['GET','POST'])
+@webapp.route('/show/<filename>', methods=['GET'])
 ##################################################
 def send_image(filename):
     filename_thumb = filename + '_thumbnail.png'
@@ -159,7 +173,7 @@ def send_image(filename):
     return send_from_directory("images", path)
 
 
-@webapp.route('/logout',methods=['GET','POST'])
+@webapp.route('/logout',methods=['POST'])
 # Clear the session when users want to log out.
 def logout():
     session.clear()
