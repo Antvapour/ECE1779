@@ -9,8 +9,6 @@ import os
 
 webapp.secret_key = '\x80\xa9s*\x12\xc7x\xa9d\x1f(\x03\xbeHJ:\x9f\xf0!\xb1a\xaa\x0f\xee'
 
-APP_ROOT = os.path.dirname(os.path.abspath(__file__))
-
 def connect_to_database():
     return mysql.connector.connect(user=db_config['user'],
                                    password=db_config['password'],
@@ -85,8 +83,9 @@ def signup_save():
     cursor.execute(query,(username,))
     row = cursor.fetchone()
     session['username'] = row[0]
+    ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'images')
 
-    path = os.path.join(APP_ROOT, 'images', str(row[0]))
+    path = os.path.join(ROOT, str(row[0]))
     os.makedirs(path)
 
     return redirect(url_for('user_home'))
@@ -149,14 +148,15 @@ def user_home():
                     WHERE users_id = %s'''
     cursor.execute(query,(users_id,))
 
-    return render_template("images/home.html",title="Home", cursor=cursor)
+    return render_template("images/home.html",title="User Home", cursor=cursor)
 
 @webapp.route('/show/<filename>', methods=['GET','POST'])
 ##################################################
 def send_image(filename):
+    filename_thumb = filename + '_thumbnail.png'
     users_id = session.get('username')
-    path = os.path.join(APP_ROOT, str(users_id))
-    return send_from_directory(path, filename)
+    path = os.path.join(str(users_id), filename_thumb)
+    return send_from_directory("images", path)
 
 
 @webapp.route('/logout',methods=['GET','POST'])
