@@ -17,7 +17,7 @@ def ec2_create():
     # create connection to ec2
     ec2 = boto3.resource('ec2')
 
-    ec2.create_instances(ImageId=config.ami_id, InstanceType='t2.small', MinCount=1, MaxCount=1,
+    instances = ec2.create_instances(ImageId=config.ami_id, InstanceType='t2.small', MinCount=1, MaxCount=1,
                          Monitoring={'Enabled': True},
                          Placement={'AvailabilityZone': 'us-east-1a', 'GroupName': 'A2_workerpool'},
                          SecurityGroups=[
@@ -33,6 +33,11 @@ def ec2_create():
                                     },
                                 ]
                             }, ])
+
+    client = boto3.client('elb')
+    print(client)
+
+    # waiter here
 
     return redirect(url_for('ec2_list'))
 
